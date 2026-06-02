@@ -17,11 +17,17 @@ export default async function CompanyDetailPage({
 }: {
   params: { ticker: string } | Promise<{ ticker: string }>
 }) {
-  const resolvedParams = (await params) as { ticker?: string } | undefined
-  const ticker = resolvedParams?.ticker
+  const rawParams: unknown = await params
+  const ticker =
+    rawParams &&
+    typeof rawParams === 'object' &&
+    'ticker' in rawParams &&
+    typeof rawParams.ticker === 'string'
+      ? rawParams.ticker
+      : undefined
   if (!ticker) return notFound()
   const data = await getCompanyPageData(ticker)
-  if (!data) notFound()
+  if (!data) return notFound()
 
   return (
     <div className="space-y-8">
