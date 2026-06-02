@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-import { simulatePriceUpdate } from '@/lib/simulation/priceEngine'
-
 export async function POST(request: Request) {
   const headerSecret = request.headers.get('x-api-secret')
   const expectedSecret = process.env.SIMULATION_API_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -11,6 +9,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { simulatePriceUpdate } = await import('@/lib/simulation/priceEngine')
     await simulatePriceUpdate()
     return NextResponse.json({ success: true, message: 'Simulation complete.' })
   } catch {
