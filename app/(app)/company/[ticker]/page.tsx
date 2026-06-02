@@ -12,8 +12,13 @@ import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyDetailPage({ params }: { params: { ticker: string } }) {
-  const data = await getCompanyPageData(params.ticker)
+export default async function CompanyDetailPage({
+  params,
+}: {
+  params: { ticker: string } | Promise<{ ticker: string }>
+}) {
+  const { ticker } = await params
+  const data = await getCompanyPageData(ticker)
   if (!data) notFound()
 
   return (
