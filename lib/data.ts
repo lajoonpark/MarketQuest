@@ -451,7 +451,7 @@ export async function getCompanyPageData(ticker: string) {
 
     const updatedAt = new Date(company.updatedAt)
     const activeFor = Number.isNaN(updatedAt.getTime())
-      ? 'recently'
+      ? 'moments ago'
       : formatDistanceToNowStrict(updatedAt, { addSuffix: true })
 
     return {
