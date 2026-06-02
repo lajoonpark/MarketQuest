@@ -17,7 +17,9 @@ export default async function CompanyDetailPage({
 }: {
   params: { ticker: string } | Promise<{ ticker: string }>
 }) {
-  const { ticker } = await params
+  const resolvedParams = await Promise.resolve(params)
+  const ticker = resolvedParams?.ticker
+  if (!ticker) notFound()
   const data = await getCompanyPageData(ticker)
   if (!data) notFound()
 
