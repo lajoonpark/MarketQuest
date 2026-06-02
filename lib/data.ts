@@ -460,7 +460,10 @@ export async function getCompanyPageData(ticker: string) {
       changePercent: getPriceChangePercent(company.currentPrice, company.previousPrice),
       activeFor,
     }
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[getCompanyPageData] failed to load company data', error)
+    }
     return null
   }
 }
