@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --border: #1f2937;
+  --muted: #94a3b8;
+  --primary: #818cf8;
+  --positive: #34d399;
+  --negative: #fb7185;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--foreground);
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(99, 102, 241, 0.12), transparent 30%),
+    linear-gradient(180deg, #020617 0%, #030712 100%);
+}
+
+a {
+  @apply transition-colors duration-200;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-white;
+  }
+
+  p {
+    @apply text-gray-300;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply border border-white/10 bg-white/5 backdrop-blur;
+  }
+
+  .card-surface {
+    @apply rounded-xl border border-gray-800 bg-gray-900;
+  }
+}
