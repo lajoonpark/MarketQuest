@@ -1,0 +1,405 @@
+You are building a polished gamified fictional stock market simulator web app.
+
+The app is NOT a real-money trading app and should NOT use real stock market data in the MVP. It should use fictional companies, simulated stock prices, simulated market news, leaderboards, daily quests, login streaks, XP, levels, achievements, and weekly seasons.
+
+The goal is to create a fun, replayable game that feels like a mix of:
+- paper trading simulator
+- strategy game
+- fantasy sports leaderboard
+- Duolingo-style daily streak/quest system
+
+Work carefully. Do not create a sloppy prototype. Do not use placeholder UI unless specifically unavoidable. Build production-quality structure, clean components, good database schema, and polished UX.
+
+Tech stack:
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- Supabase Auth
+- Supabase Postgres
+- Prisma ORM
+- Vercel-compatible deployment
+- Recharts or Lightweight Charts for charts
+- SVG-generated fictional company logos
+
+Core design rule:
+The MVP should use fictional companies only. Do not integrate real stock APIs yet.
+
+App name for now:
+MarketQuest
+
+Main user experience:
+A user signs up, receives $10,000 fake cash, browses fictional companies, reads simulated market news, buys/sells fake shares, completes daily quests, gains XP, keeps login streaks, unlocks achievements, and competes on leaderboards during weekly seasons.
+
+Important disclaimers:
+Show clearly in the UI that this is a fictional educational trading game and not real financial advice.
+
+Pages to build:
+- /
+- /dashboard
+- /market
+- /company/[ticker]
+- /portfolio
+- /trade
+- /news
+- /quests
+- /leaderboard
+- /profile
+- /learn
+
+Core features:
+1. Authentication
+2. Fictional company market
+3. Simulated price engine
+4. Fake trading engine
+5. Portfolio tracking
+6. Price history charts
+7. Market news system
+8. Daily quests
+9. XP and levels
+10. Login streaks
+11. Achievements
+12. Weekly seasons
+13. Leaderboards
+14. Profile page
+15. Clean responsive UI
+
+Fictional company requirements:
+Create 30 fictional companies across these sectors:
+- Technology
+- Food & Retail
+- Energy
+- Healthcare
+- Entertainment
+- Logistics
+
+Each company should have:
+- name
+- ticker
+- sector
+- description
+- current_price
+- previous_price
+- volatility
+- growth_rating
+- risk_rating
+- sentiment_score
+- logo_svg
+- created_at
+- updated_at
+
+Example companies:
+- NovaBite Foods, NBIT, Food & Retail
+- SkyForge Robotics, SKYF, Technology
+- GreenGrid Energy, GRDG, Energy
+- PixelPeak Studios, PXPK, Entertainment
+- MedPulse Labs, MPLS, Healthcare
+- AquaLine Shipping, AQLN, Logistics
+
+Do not use real company names or real stock tickers.
+
+Database schema should include:
+- users/profiles
+- companies
+- company_price_history
+- market_news
+- portfolios
+- holdings
+- trades
+- seasons
+- quests
+- user_quests
+- achievements
+- user_achievements
+- login_streaks or streak fields on profile
+- leaderboard_snapshots
+- lessons
+- user_lesson_progress
+
+Trading engine requirements:
+- Every user starts with $10,000 fake cash in the active season.
+- Users can buy and sell fictional stocks.
+- All trading logic must run server-side.
+- Client cannot submit a custom stock price.
+- Buy order must check available cash.
+- Sell order must check available shares.
+- Store every trade.
+- Track average buy price.
+- Track realized and unrealized profit/loss.
+- Portfolio value = cash + current value of all holdings.
+- Return percentage = (portfolio value - starting cash) / starting cash * 100.
+
+Market simulation engine:
+Create a scheduled/server-side function that updates simulated company prices.
+
+Price updates should consider:
+- general market trend
+- sector trend
+- company volatility
+- company sentiment score
+- active news events
+- random movement
+
+Basic formula idea:
+newPrice = oldPrice * (1 + marketMove + sectorMove + eventImpact + randomNoise)
+
+Rules:
+- Prevent prices from dropping below $1.
+- Store every price update in company_price_history.
+- Make price movement feel believable, not completely random.
+- High-volatility companies should move more.
+- Low-volatility companies should move less.
+- Positive news should usually increase prices.
+- Negative news should usually decrease prices.
+
+Market news system:
+Create simulated news events that affect companies or sectors.
+
+News types:
+- market-wide news
+- sector news
+- company-specific news
+
+Each news event should include:
+- title
+- description
+- affected_company_id nullable
+- affected_sector nullable
+- impact_direction: positive, negative, neutral
+- impact_strength
+- created_at
+- expires_at
+
+Examples:
+- "SkyForge Robotics wins major automation contract"
+- "Food retail stocks rise after strong consumer spending report"
+- "PixelPeak Studios delays its upcoming game release"
+- "Energy sector falls after weak demand forecast"
+
+Gamification:
+Implement XP, levels, streaks, quests, and achievements.
+
+XP:
+- Users earn XP from daily login, trades, quests, achievements, and learning lessons.
+- Level formula:
+  level = floor(sqrt(xp / 100)) + 1
+
+Login streak:
+- Track last_login_date
+- Track current_streak
+- Track longest_streak
+- Consecutive daily login increases streak
+- Missing a day resets current streak to 1
+- Award small XP for daily login
+
+Daily quests:
+Create quests like:
+- Log in today
+- Make one trade
+- Buy your first stock
+- Sell a stock for profit
+- View 3 company pages
+- Add 3 companies to watchlist
+- Diversify into 3 sectors
+- Read 3 news items
+- Complete one lesson
+- Reach a 3-day streak
+
+Quest UI:
+- Show daily quest cards
+- Progress bar
+- Completed state
+- Claim reward button
+- XP reward animation/toast
+
+Achievements:
+Create achievements:
+- First Trade
+- First Profit
+- First Loss
+- 3-Day Streak
+- 7-Day Streak
+- Diversified Investor
+- Watchlist Builder
+- Market Reader
+- Comeback Trader
+- Long-Term Holder
+
+Seasons:
+- Weekly seasons
+- Each season has start date, end date, starting cash, and status
+- New users join the current active season
+- Leaderboards are season-based
+- Everyone starts each season with the same fake cash
+
+Leaderboards:
+Build leaderboards for:
+- season return percentage
+- total portfolio value
+- daily return
+- XP
+- prediction points later, but not required in MVP
+
+Leaderboard UI:
+- Top 3 podium
+- User's own rank card
+- Table of ranked users
+- Rank movement indicator if snapshot data exists
+
+UI style:
+Make the app modern, clean, and slightly game-like.
+
+Visual direction:
+- dark mode first
+- fintech dashboard feel
+- cards
+- charts
+- subtle gradients
+- clean typography
+- badge icons
+- polished buttons
+- smooth hover states
+- responsive mobile layout
+
+Do not make it look childish. It should feel like a serious game for teenagers/adults.
+
+Company logos:
+Generate simple fictional SVG logos for each company.
+Use initials, abstract shapes, simple gradients, and sector-inspired icons.
+Do not use placeholder grey boxes.
+Do not copy real company logos.
+
+Dashboard should show:
+- total portfolio value
+- cash balance
+- daily change
+- season return %
+- current rank
+- XP and level
+- login streak
+- daily quests
+- top movers
+- latest market news
+- holdings summary
+
+Market page should show:
+- searchable company list
+- sector filters
+- top gainers
+- top losers
+- risk rating
+- current price
+- daily change
+- small sparkline if possible
+
+Company detail page should show:
+- company logo
+- ticker
+- description
+- current price
+- daily change
+- sector
+- risk rating
+- sentiment
+- price chart
+- related news
+- buy/sell action
+
+Portfolio page should show:
+- portfolio value
+- cash
+- holdings table
+- allocation by sector
+- profit/loss
+- trade history
+- chart of portfolio value over time if possible
+
+Trade page should show:
+- buy/sell form
+- selected company
+- current price
+- estimated total
+- available cash
+- owned shares
+- confirmation modal
+- warning that this is fictional/fake trading
+
+News page should show:
+- market news feed
+- filters by sector/company
+- clear impact labels
+- expiration/active state
+
+Profile page should show:
+- username
+- level
+- XP
+- badges
+- streak
+- season stats
+- trading stats
+
+Learning page:
+Add simple educational lessons:
+- What is a stock?
+- What is diversification?
+- What is volatility?
+- What is market sentiment?
+- Why risk management matters
+- Difference between investing and gambling
+
+Each lesson should reward XP when completed.
+
+Security and correctness:
+- All trading mutations must be server-side.
+- Never trust client-provided prices.
+- Validate all inputs.
+- Prevent negative cash.
+- Prevent negative holdings.
+- Prevent selling more than owned.
+- Use database transactions for buy/sell operations.
+- Use proper error handling and user-friendly messages.
+- Do not expose service role keys to the client.
+
+Developer workflow:
+- Build in small working steps.
+- After each major feature, make sure the app still runs.
+- Add seed data.
+- Add useful comments only where helpful.
+- Prefer reusable components.
+- Keep business logic separated from UI components.
+- Avoid giant messy files.
+
+Implementation order:
+1. Project setup and UI shell
+2. Database schema and Prisma models
+3. Auth and user profile creation
+4. Seed fictional companies and seasons
+5. Market page and company detail page
+6. Simulated price engine and price history
+7. Portfolio creation
+8. Buy/sell trading engine
+9. Portfolio page
+10. Dashboard
+11. Market news system
+12. Quests, XP, and streaks
+13. Achievements
+14. Leaderboards
+15. Learning page
+16. Polish, responsiveness, empty states, loading states, error states
+
+Acceptance criteria:
+- A new user can sign up.
+- The user gets a fake portfolio with $10,000.
+- The user can browse fictional companies.
+- The user can buy and sell fake shares.
+- Portfolio value updates correctly.
+- Holdings and trade history are stored.
+- Simulated prices can update.
+- Price history is visible.
+- Daily quests work.
+- XP and levels update.
+- Login streak works.
+- Leaderboard ranks users by season return.
+- App has a polished modern UI.
+- No real stock API is used in the MVP.
+- No real-money trading features exist.
