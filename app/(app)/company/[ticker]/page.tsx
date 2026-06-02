@@ -15,9 +15,10 @@ export const dynamic = 'force-dynamic'
 export default async function CompanyDetailPage({
   params,
 }: {
-  params: { ticker?: string } | Promise<{ ticker?: string }>
+  params: { ticker: string } | Promise<{ ticker: string }>
 }) {
-  const { ticker } = (await params) ?? {}
+  const resolvedParams = (await params) as { ticker?: string } | undefined
+  const ticker = resolvedParams?.ticker
   if (!ticker) return notFound()
   const data = await getCompanyPageData(ticker)
   if (!data) notFound()
