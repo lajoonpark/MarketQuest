@@ -28,6 +28,10 @@ function toTitleCase(value: string) {
     .join(' ')
 }
 
+function fallbackUsername(userId: string) {
+  return `trader${userId.replace(/-/g, '').slice(0, 6)}`
+}
+
 export function getUserIdentity(user: AuthUser) {
   const metadata = user.user_metadata ?? {}
   const metadataDisplayName =
@@ -44,7 +48,7 @@ export function getUserIdentity(user: AuthUser) {
 
   const username =
     normalizeUsername(metadataUsername || metadataDisplayName || emailPrefix) ||
-    `trader${user.id.replace(/-/g, '').slice(0, 6)}`
+    fallbackUsername(user.id)
   const displayName = toTitleCase(
     metadataDisplayName || metadataUsername || emailPrefix
   )
@@ -56,12 +60,12 @@ async function getAvailableUsername(baseUsername: string, userId: string) {
   const suffix = userId.replace(/-/g, '').slice(0, 6)
   const candidates = [
     baseUsername,
-    normalizeUsername(`${baseUsername}${suffix}`) || `trader${suffix}`,
+    normalizeUsername(`${baseUsername}${suffix}`) || fallbackUsername(userId),
     ...Array.from({ length: 9 }, (_, index) =>
       normalizeUsername(`${baseUsername}${suffix}${index + 1}`) ||
       `trader${suffix}${index + 1}`
     ),
-    `trader${suffix}`,
+    fallbackUsername(userId),
   ]
   const uniqueCandidates = Array.from(new Set(candidates))
   const existingUsernames = new Set(
@@ -75,7 +79,7 @@ async function getAvailableUsername(baseUsername: string, userId: string) {
 
   return (
     uniqueCandidates.find((candidate) => !existingUsernames.has(candidate)) ||
-    `trader${suffix}`
+    fallbackUsername(userId)
   )
 }
 

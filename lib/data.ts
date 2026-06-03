@@ -131,13 +131,21 @@ function shiftIsoDate(isoDate: string, deltaMs: number) {
   return new Date(date.getTime() + deltaMs).toISOString()
 }
 
+function getLatestTimestamp(values: string[]) {
+  const timestamps = values
+    .map((value) => new Date(value).getTime())
+    .filter((value) => Number.isFinite(value))
+
+  return timestamps.length ? Math.max(...timestamps) : null
+}
+
 function normalizeCompanyRecency(companies: CompanyRecord[]) {
   if (!companies.length) return companies
 
-  const latestUpdatedAt = Math.max(
-    ...companies.map((company) => new Date(company.updatedAt).getTime())
+  const latestUpdatedAt = getLatestTimestamp(
+    companies.map((company) => company.updatedAt)
   )
-  if (!Number.isFinite(latestUpdatedAt)) return companies
+  if (!latestUpdatedAt) return companies
 
   const deltaMs = Date.now() - latestUpdatedAt
   if (deltaMs <= STALE_DATA_THRESHOLD_MS) return companies
@@ -156,10 +164,8 @@ function normalizeCompanyRecency(companies: CompanyRecord[]) {
 function normalizeNewsRecency(news: NewsRecord[]) {
   if (!news.length) return news
 
-  const latestCreatedAt = Math.max(
-    ...news.map((item) => new Date(item.createdAt).getTime())
-  )
-  if (!Number.isFinite(latestCreatedAt)) return news
+  const latestCreatedAt = getLatestTimestamp(news.map((item) => item.createdAt))
+  if (!latestCreatedAt) return news
 
   const deltaMs = Date.now() - latestCreatedAt
   if (deltaMs <= STALE_DATA_THRESHOLD_MS) return news

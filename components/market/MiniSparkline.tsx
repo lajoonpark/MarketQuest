@@ -2,6 +2,9 @@
 
 import { Area, AreaChart } from 'recharts'
 
+const SPARKLINE_WIDTH = 112
+const SPARKLINE_HEIGHT = 56
+
 export function MiniSparkline({
   data,
   positive,
@@ -11,7 +14,7 @@ export function MiniSparkline({
 }) {
   return (
     <div className="shrink-0">
-      <AreaChart width={112} height={56} data={data}>
+      <AreaChart width={SPARKLINE_WIDTH} height={SPARKLINE_HEIGHT} data={data}>
         <Area
           type="monotone"
           dataKey="price"
