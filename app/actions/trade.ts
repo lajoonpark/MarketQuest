@@ -5,26 +5,31 @@ import { Decimal } from '@prisma/client/runtime/library'
 import { prisma } from '@/lib/prisma'
 import { calculateLevel } from '@/lib/utils'
 
-import { awardXp } from '@/app/actions/profile'
 import { updateQuestProgress } from '@/app/actions/quests'
 
 async function unlockAchievement(profileId: string, title: string) {
-  const achievement = await prisma.achievement.findFirst({ where: { title } })
-  if (!achievement) return
+  try {
+    const achievement = await prisma.achievement.findFirst({ where: { title } })
+    if (!achievement) return
 
-  await prisma.userAchievement.upsert({
-    where: {
-      profileId_achievementId: {
+    await prisma.userAchievement.upsert({
+      where: {
+        profileId_achievementId: {
+          profileId,
+          achievementId: achievement.id,
+        },
+      },
+      update: {},
+      create: {
         profileId,
         achievementId: achievement.id,
       },
-    },
-    update: {},
-    create: {
-      profileId,
-      achievementId: achievement.id,
-    },
-  })
+    })
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[unlockAchievement] failed to unlock achievement:', error)
+    }
+  }
 }
 
 export async function executeTrade(
@@ -143,7 +148,6 @@ export async function executeTrade(
     })
 
     await Promise.all([
-      awardXp(result.profileId, 0),
       updateQuestProgress(result.profileId, 'trade_count', 1),
       type === 'buy' ? updateQuestProgress(result.profileId, 'buy_count', 1) : Promise.resolve(),
       unlockAchievement(result.profileId, 'First Trade'),
