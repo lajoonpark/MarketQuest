@@ -25,7 +25,11 @@ async function unlockAchievement(profileId: string, title: string) {
         achievementId: achievement.id,
       },
     })
-  } catch {}
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[unlockAchievement] failed to unlock achievement:', error)
+    }
+  }
 }
 
 export async function executeTrade(
