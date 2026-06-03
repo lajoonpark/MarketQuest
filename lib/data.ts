@@ -439,16 +439,32 @@ export async function getTradePageData(selectedTicker?: string) {
 }
 
 export async function getCompanyPageData(ticker: string) {
-  const [company, allNews] = await Promise.all([getCompanyByTicker(ticker), getNews()])
-  if (!company) return null
-  const relatedNews = allNews.filter(
-    (item) => item.company?.ticker === company.ticker || item.affectedSector === company.sector
-  )
-  return {
-    company,
-    relatedNews,
-    changePercent: getPriceChangePercent(company.currentPrice, company.previousPrice),
-    activeFor: formatDistanceToNowStrict(new Date(company.updatedAt), { addSuffix: true }),
+  const normalizedTicker = ticker.trim().toUpperCase()
+  if (!normalizedTicker) return null
+
+  try {
+    const [company, allNews] = await Promise.all([getCompanyByTicker(normalizedTicker), getNews()])
+    if (!company) return null
+    const relatedNews = allNews.filter(
+      (item) => item.company?.ticker === company.ticker || item.affectedSector === company.sector
+    )
+
+    const updatedAt = new Date(company.updatedAt)
+    const activeFor = Number.isNaN(updatedAt.getTime())
+      ? 'moments ago'
+      : formatDistanceToNowStrict(updatedAt, { addSuffix: true })
+
+    return {
+      company,
+      relatedNews,
+      changePercent: getPriceChangePercent(company.currentPrice, company.previousPrice),
+      activeFor,
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[getCompanyPageData] failed to load company data', error)
+    }
+    return null
   }
 }
 

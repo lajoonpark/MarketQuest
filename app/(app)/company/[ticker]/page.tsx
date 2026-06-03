@@ -11,6 +11,7 @@ import { getCompanyPageData } from '@/lib/data'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
+const TICKER_PATTERN = /^[A-Z]{1,10}$/
 
 export default async function CompanyDetailPage({
   params,
@@ -18,14 +19,15 @@ export default async function CompanyDetailPage({
   params: { ticker: string } | Promise<{ ticker: string }>
 }) {
   const rawParams: unknown = await params
-  const ticker =
+  const tickerParam =
     rawParams &&
     typeof rawParams === 'object' &&
     'ticker' in rawParams &&
     typeof rawParams.ticker === 'string'
       ? rawParams.ticker
       : undefined
-  if (!ticker) return notFound()
+  const ticker = tickerParam?.trim().toUpperCase()
+  if (!ticker || !TICKER_PATTERN.test(ticker)) return notFound()
   const data = await getCompanyPageData(ticker)
   if (!data) return notFound()
 
