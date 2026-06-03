@@ -53,34 +53,30 @@ export function getUserIdentity(user: AuthUser) {
 }
 
 async function getAvailableUsername(baseUsername: string, userId: string) {
-  const exactMatch = await prisma.profile.findUnique({
-    where: { username: baseUsername },
-    select: { id: true },
-  })
-  if (!exactMatch) return baseUsername
-
   const suffix = userId.replace(/-/g, '').slice(0, 6)
-  const fallback = normalizeUsername(`${baseUsername}${suffix}`) || `trader${suffix}`
-  const fallbackMatch = await prisma.profile.findUnique({
-    where: { username: fallback },
-    select: { id: true },
-  })
+  const candidates = [
+    baseUsername,
+    normalizeUsername(`${baseUsername}${suffix}`) || `trader${suffix}`,
+    ...Array.from({ length: 9 }, (_, index) =>
+      normalizeUsername(`${baseUsername}${suffix}${index + 1}`) ||
+      `trader${suffix}${index + 1}`
+    ),
+    `trader${suffix}`,
+  ]
+  const uniqueCandidates = Array.from(new Set(candidates))
+  const existingUsernames = new Set(
+    (
+      await prisma.profile.findMany({
+        where: { username: { in: uniqueCandidates } },
+        select: { username: true },
+      })
+    ).map((profile) => profile.username)
+  )
 
-  if (!fallbackMatch) return fallback
-
-  for (let index = 1; index <= 9; index += 1) {
-    const candidate =
-      normalizeUsername(`${baseUsername}${suffix}${index}`) ||
-      `trader${suffix}${index}`
-    const candidateMatch = await prisma.profile.findUnique({
-      where: { username: candidate },
-      select: { id: true },
-    })
-
-    if (!candidateMatch) return candidate
-  }
-
-  return `trader${suffix}`
+  return (
+    uniqueCandidates.find((candidate) => !existingUsernames.has(candidate)) ||
+    `trader${suffix}`
+  )
 }
 
 export async function ensureProfileForUser(user: AuthUser) {
