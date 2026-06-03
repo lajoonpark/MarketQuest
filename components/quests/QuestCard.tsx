@@ -30,7 +30,7 @@ export function QuestCard({ quest }: { quest: UserQuestRecord }) {
   const Icon = iconMap[quest.quest.icon as keyof typeof iconMap] ?? Target
 
   return (
-    <Card className="space-y-4">
+    <Card className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-indigo-500/10 p-3">
@@ -48,10 +48,11 @@ export function QuestCard({ quest }: { quest: UserQuestRecord }) {
 
       <ProgressBar value={progress} label={`${quest.progress}/${quest.quest.target}`} />
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-400">Reward: <span className="font-medium text-white">{quest.quest.xpReward} XP</span></p>
         {quest.completed && !quest.claimedAt ? (
           <Button
+            className="w-full sm:w-auto"
             disabled={pending}
             onClick={() =>
               startTransition(async () => {
@@ -63,7 +64,7 @@ export function QuestCard({ quest }: { quest: UserQuestRecord }) {
             {pending ? 'Claiming...' : 'Claim reward'}
           </Button>
         ) : (
-          <Button variant="secondary" disabled>
+          <Button variant="secondary" className="w-full sm:w-auto" disabled>
             {quest.claimedAt ? 'Reward claimed' : 'In progress'}
           </Button>
         )}

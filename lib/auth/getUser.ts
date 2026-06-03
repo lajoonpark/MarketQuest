@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/prisma'
+import { ensureProfileForUser } from '@/lib/profile'
 
 export async function getCurrentUser() {
   const supabase = await createSupabaseServerClient()
@@ -15,19 +15,5 @@ export async function getCurrentProfile() {
   const user = await getCurrentUser()
   if (!user) return null
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: user.id },
-    include: {
-      portfolios: {
-        include: {
-          season: true,
-          holdings: { include: { company: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      },
-    },
-  })
-
-  return profile
+  return ensureProfileForUser(user)
 }

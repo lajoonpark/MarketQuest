@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { User } from '@supabase/supabase-js'
 import { differenceInCalendarDays, formatDistanceToNowStrict, isAfter } from 'date-fns'
 
-import { getCurrentProfile } from '@/lib/auth/getUser'
+import { getCurrentProfile, getCurrentUser } from '@/lib/auth/getUser'
 import { prisma } from '@/lib/prisma'
+import { getUserIdentity } from '@/lib/profile'
 import {
   mockCompanies,
   mockLeaderboard,
@@ -30,6 +32,8 @@ import type {
   UserQuestRecord,
 } from '@/lib/types'
 import { formatPercent, getPriceChangePercent } from '@/lib/utils'
+
+const STALE_DATA_THRESHOLD_MS = 1000 * 60 * 60 * 24 * 14
 
 function toNumber(value: unknown) {
   if (typeof value === 'number') return value
@@ -121,6 +125,104 @@ function serializeProfile(profile: any): ProfileRecord {
   }
 }
 
+function shiftIsoDate(isoDate: string, deltaMs: number) {
+  const date = new Date(isoDate)
+  if (Number.isNaN(date.getTime())) return isoDate
+  return new Date(date.getTime() + deltaMs).toISOString()
+}
+
+function normalizeCompanyRecency(companies: CompanyRecord[]) {
+  if (!companies.length) return companies
+
+  const latestUpdatedAt = Math.max(
+    ...companies.map((company) => new Date(company.updatedAt).getTime())
+  )
+  if (!Number.isFinite(latestUpdatedAt)) return companies
+
+  const deltaMs = Date.now() - latestUpdatedAt
+  if (deltaMs <= STALE_DATA_THRESHOLD_MS) return companies
+
+  return companies.map((company) => ({
+    ...company,
+    createdAt: shiftIsoDate(company.createdAt, deltaMs),
+    updatedAt: shiftIsoDate(company.updatedAt, deltaMs),
+    priceHistory: company.priceHistory.map((point) => ({
+      ...point,
+      recordedAt: shiftIsoDate(point.recordedAt, deltaMs),
+    })),
+  }))
+}
+
+function normalizeNewsRecency(news: NewsRecord[]) {
+  if (!news.length) return news
+
+  const latestCreatedAt = Math.max(
+    ...news.map((item) => new Date(item.createdAt).getTime())
+  )
+  if (!Number.isFinite(latestCreatedAt)) return news
+
+  const deltaMs = Date.now() - latestCreatedAt
+  if (deltaMs <= STALE_DATA_THRESHOLD_MS) return news
+
+  return news.map((item) => ({
+    ...item,
+    createdAt: shiftIsoDate(item.createdAt, deltaMs),
+    expiresAt: shiftIsoDate(item.expiresAt, deltaMs),
+    company: item.company
+      ? normalizeCompanyRecency([item.company])[0]
+      : null,
+  }))
+}
+
+function createStarterBundle(user: Pick<User, 'id' | 'email' | 'user_metadata'>) {
+  const { username, displayName, avatarUrl } = getUserIdentity(user)
+  const createdAt = new Date().toISOString()
+  const profile: ProfileRecord = {
+    id: `profile-${user.id}`,
+    userId: user.id,
+    username,
+    displayName,
+    avatarUrl,
+    xp: 0,
+    level: 1,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastLoginDate: null,
+    createdAt,
+    updatedAt: createdAt,
+  }
+  const season = mockSeason
+  const portfolio: PortfolioRecord = {
+    id: `portfolio-${user.id}`,
+    profileId: profile.id,
+    seasonId: season.id,
+    cash: season.startingCash,
+    createdAt,
+    updatedAt: createdAt,
+    season,
+    holdings: [],
+    trades: [],
+  }
+
+  return {
+    profile,
+    portfolio,
+    season,
+    userQuests: mockQuests.slice(0, 3).map((quest, index) => ({
+      id: `starter-quest-${index + 1}`,
+      questId: quest.id,
+      profileId: profile.id,
+      progress: 0,
+      completed: false,
+      claimedAt: null,
+      assignedAt: createdAt,
+      quest,
+    })),
+    achievements: [] as UserAchievementRecord[],
+    lessons: [] as UserLessonRecord[],
+  }
+}
+
 export function getMockPortfolioMetrics(portfolio: PortfolioRecord) {
   const holdingsValue = portfolio.holdings.reduce(
     (total, holding) => total + holding.company.currentPrice * holding.shares,
@@ -174,7 +276,7 @@ export async function getCompanies(): Promise<CompanyRecord[]> {
       orderBy: { name: 'asc' },
     })
     if (!companies.length) return mockCompanies
-    return companies.map(serializeCompany)
+    return normalizeCompanyRecency(companies.map(serializeCompany))
   } catch {
     return mockCompanies
   }
@@ -192,7 +294,7 @@ export async function getCompanyByTicker(ticker: string) {
     if (!company) {
       return mockCompanies.find((item) => item.ticker === ticker.toUpperCase()) ?? null
     }
-    return serializeCompany(company)
+    return normalizeCompanyRecency([serializeCompany(company)])[0]
   } catch {
     return mockCompanies.find((item) => item.ticker === ticker.toUpperCase()) ?? null
   }
@@ -208,7 +310,7 @@ export async function getNews(): Promise<NewsRecord[]> {
       take: 20,
     })
     if (!news.length) return mockNews
-    return news.map((item) => ({
+    return normalizeNewsRecency(news.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -219,7 +321,7 @@ export async function getNews(): Promise<NewsRecord[]> {
       createdAt: item.createdAt.toISOString(),
       expiresAt: item.expiresAt.toISOString(),
       company: item.company ? serializeCompany(item.company) : null,
-    }))
+    })))
   } catch {
     return mockNews
   }
@@ -233,17 +335,24 @@ export async function getProfileBundle(): Promise<{
   achievements: UserAchievementRecord[]
   lessons: UserLessonRecord[]
 }> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) {
+    return {
+      profile: mockProfile,
+      portfolio: mockPortfolio,
+      season: mockSeason,
+      userQuests: mockUserQuests,
+      achievements: mockUserAchievements,
+      lessons: mockUserLessons,
+    }
+  }
+
+  const starterBundle = createStarterBundle(currentUser)
+
   try {
     const currentProfile = await getCurrentProfile()
     if (!currentProfile) {
-      return {
-        profile: mockProfile,
-        portfolio: mockPortfolio,
-        season: mockSeason,
-        userQuests: mockUserQuests,
-        achievements: mockUserAchievements,
-        lessons: mockUserLessons,
-      }
+      return starterBundle
     }
 
     const season = await prisma.season.findFirst({ where: { status: 'active' }, orderBy: { startDate: 'desc' } })
@@ -278,11 +387,58 @@ export async function getProfileBundle(): Promise<{
     if (!portfolio || !season) {
       return {
         profile: serializeProfile(currentProfile),
-        portfolio: mockPortfolio,
-        season: mockSeason,
-        userQuests: mockUserQuests,
-        achievements: mockUserAchievements,
-        lessons: mockUserLessons,
+        portfolio: starterBundle.portfolio,
+        season: starterBundle.season,
+        userQuests: userQuests.length
+          ? userQuests.map((item) => ({
+              id: item.id,
+              questId: item.questId,
+              profileId: item.profileId,
+              progress: item.progress,
+              completed: item.completed,
+              claimedAt: item.claimedAt ? item.claimedAt.toISOString() : null,
+              assignedAt: item.assignedAt.toISOString(),
+              quest: {
+                id: item.quest.id,
+                title: item.quest.title,
+                description: item.quest.description,
+                type: item.quest.type,
+                target: item.quest.target,
+                xpReward: item.quest.xpReward,
+                icon: item.quest.icon,
+              },
+            }))
+          : starterBundle.userQuests,
+        achievements: achievements.length
+          ? achievements.map((item) => ({
+              id: item.id,
+              profileId: item.profileId,
+              unlockedAt: item.unlockedAt.toISOString(),
+              achievement: {
+                id: item.achievement.id,
+                title: item.achievement.title,
+                description: item.achievement.description,
+                icon: item.achievement.icon,
+                xpReward: item.achievement.xpReward,
+              },
+            }))
+          : starterBundle.achievements,
+        lessons: lessons.length
+          ? lessons.map((item) => ({
+              id: item.id,
+              lessonId: item.lessonId,
+              profileId: item.profileId,
+              completedAt: item.completedAt.toISOString(),
+              lesson: {
+                id: item.lesson.id,
+                title: item.lesson.title,
+                slug: item.lesson.slug,
+                content: item.lesson.content,
+                xpReward: item.lesson.xpReward,
+                orderIndex: item.lesson.orderIndex,
+              },
+            }))
+          : starterBundle.lessons,
       }
     }
 
@@ -317,7 +473,7 @@ export async function getProfileBundle(): Promise<{
               icon: item.quest.icon,
             },
           }))
-        : mockUserQuests,
+        : starterBundle.userQuests,
       achievements: achievements.length
         ? achievements.map((item) => ({
             id: item.id,
@@ -331,7 +487,7 @@ export async function getProfileBundle(): Promise<{
               xpReward: item.achievement.xpReward,
             },
           }))
-        : mockUserAchievements,
+        : starterBundle.achievements,
       lessons: lessons.length
         ? lessons.map((item) => ({
             id: item.id,
@@ -347,17 +503,10 @@ export async function getProfileBundle(): Promise<{
               orderIndex: item.lesson.orderIndex,
             },
           }))
-        : mockUserLessons,
+        : starterBundle.lessons,
     }
   } catch {
-    return {
-      profile: mockProfile,
-      portfolio: mockPortfolio,
-      season: mockSeason,
-      userQuests: mockUserQuests,
-      achievements: mockUserAchievements,
-      lessons: mockUserLessons,
-    }
+    return starterBundle
   }
 }
 

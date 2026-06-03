@@ -33,22 +33,22 @@ export default async function MarketPage({
   return (
     <div className="space-y-8">
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="text-2xl font-semibold">Market overview</h2>
             <p className="mt-1 text-sm text-gray-400">Search fictional companies, sort by price or performance, and compare sector leaders.</p>
           </div>
-          <form className="grid gap-3 sm:grid-cols-[1fr_160px_140px_auto]">
-            <input name="q" defaultValue={searchParams?.q} placeholder="Search company or ticker" className="rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500" />
-            <select name="sector" defaultValue={sector} className="rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500">
+          <form className="grid gap-3 md:grid-cols-2 xl:min-w-[44rem] xl:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
+            <input name="q" defaultValue={searchParams?.q} placeholder="Search company or ticker" className="min-w-0 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500 xl:col-span-1" />
+            <select name="sector" defaultValue={sector} className="min-w-0 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500">
               {sectors.map((item) => <option key={item}>{item}</option>)}
             </select>
-            <select name="sort" defaultValue={sort} className="rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500">
+            <select name="sort" defaultValue={sort} className="min-w-0 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white outline-none focus:border-indigo-500">
               <option value="change">Sort by change</option>
               <option value="price">Sort by price</option>
               <option value="name">Sort by name</option>
             </select>
-            <button className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400">Apply</button>
+            <button className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 md:col-span-2 xl:col-span-1">Apply</button>
           </form>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
