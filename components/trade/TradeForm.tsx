@@ -27,6 +27,7 @@ export function TradeForm({
   const [shares, setShares] = useState('1')
   const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [tradeSuccess, setTradeSuccess] = useState<boolean | null>(null)
   const [pending, startTransition] = useTransition()
 
   const activeCompany = useMemo(
@@ -121,7 +122,11 @@ export function TradeForm({
           </div>
         </div>
 
-        {message ? <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">{message}</p> : null}
+        {message ? (
+          <p className={`rounded-lg border px-3 py-2 text-sm ${tradeSuccess ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200' : 'border-red-500/20 bg-red-500/10 text-red-300'}`}>
+            {message}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-sm text-gray-400">Orders use the current simulated price and execute server-side. Client-side totals are previews only.</p>
@@ -178,6 +183,7 @@ export function TradeForm({
                   startTransition(async () => {
                     const result = await executeTrade(portfolio.id, activeCompany.id, tradeType, numericShares)
                     setMessage(result.message)
+                    setTradeSuccess(result.success)
                     setConfirming(false)
                     if (result.success) {
                       router.refresh()
