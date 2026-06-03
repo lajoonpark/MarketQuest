@@ -2,38 +2,8 @@
 
 import { redirect } from 'next/navigation'
 
-import { prisma } from '@/lib/prisma'
+import { ensureProfileForUser } from '@/lib/profile'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { calculateLevel } from '@/lib/utils'
-
-async function createStarterPortfolio(userId: string, username: string, displayName: string) {
-  const season = await prisma.season.findFirst({ where: { status: 'active' }, orderBy: { startDate: 'desc' } })
-  const profile = await prisma.profile.create({
-    data: {
-      userId,
-      username,
-      displayName,
-      level: calculateLevel(0),
-      portfolios: season
-        ? {
-            create: {
-              seasonId: season.id,
-              cash: season.startingCash,
-            },
-          }
-        : undefined,
-      userQuests: {
-        create: (await prisma.quest.findMany({ take: 3 })).map((quest) => ({
-          questId: quest.id,
-          progress: 0,
-          completed: false,
-        })),
-      },
-    },
-  })
-
-  return profile
-}
 
 export async function signUp(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -55,10 +25,14 @@ export async function signUp(formData: FormData) {
 
     if (error) return { success: false, message: error.message }
     if (data.user) {
-      const existing = await prisma.profile.findUnique({ where: { userId: data.user.id } })
-      if (!existing) {
-        await createStarterPortfolio(data.user.id, username, displayName)
-      }
+      await ensureProfileForUser({
+        ...data.user,
+        user_metadata: {
+          ...data.user.user_metadata,
+          display_name: displayName,
+          username,
+        },
+      })
     }
 
     return { success: true, message: 'Account created. Welcome to MarketQuest.' }

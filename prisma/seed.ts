@@ -2,7 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { addDays, subDays, subHours } from 'date-fns'
 
 const prisma = new PrismaClient()
-const now = new Date('2025-01-15T16:00:00.000Z')
+const now = new Date()
 
 const sectorPalettes: Record<string, string[]> = {
   Technology: ['#2563eb', '#4338ca', '#7c3aed', '#1d4ed8', '#5b21b6'],

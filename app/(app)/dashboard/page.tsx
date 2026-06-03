@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold">Daily quests</h2>
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
               {data.dailyQuests.map((quest) => (
                 <QuestCard key={quest.id} quest={quest} />
               ))}
